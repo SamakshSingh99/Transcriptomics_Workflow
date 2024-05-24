@@ -1,0 +1,73 @@
+# Load YAML Configuration File
+import yaml
+
+configfile: "/Volumes/Sam_Drive/Data/Salmonella/Snakemake/config.yaml"
+config = yaml.safe_load(open(configfile))
+
+# Define Variables From The Config
+
+data_dir= config["data_dir"]
+genome_fasta= config["genome_fasta"]
+annotations_gtf= config["annotations_gtf"]
+samples= config["samples"]
+
+rule all:
+	input:
+		expand("results/{sample}.count.txt", sample=[sample["name"] for sample in samples])
+
+
+rule star_index:
+	input:
+		genome= genome_fasta,
+		gtf= annotations_gtf
+	output:
+		directory("star_index")
+	params:
+		gtf=annotations_gtf,
+		genomeDir="star_index"
+
+	shell:
+		"""
+		STAR --runMode genomeGenerate --genomeDir {params.genomeDir} \
+		--genomeFastaFiles {input.genome} --sjdbGTFfile {params.gtf} \
+		--runThreadN 8
+		"""
+
+
+rule star_align:
+	input:
+		R1 = lambda wc: f"{data_dir}/{wc.sample}_1.fastq.gz",
+		index = "star_index"
+	output:
+		sam= "results/{sample}.Aligned.out.sam",
+		bam= "results/{sample}.Aligned.out.bam"
+	params:
+		genomeDir= "star_index"
+	shell:
+		"""
+		STAR --genomeDir {params.genomeDir} --readFilesIn {input.R1} {input.R2} \
+		--outFileNamePrefix results/{wildcards.sample}. --runThreadN 8 \
+		&& samtools view -bS results/{wildcards.sample}.Aligned.out.sam > {output.bam} \
+		&& rm {output.sam}
+		"""
+
+rule index_bam:
+	input:
+		"results/{sample}.Aligned.sorted.bam"
+	output:
+		"results/{sample}.Aligned.sorted.bam.bai"
+	shell:
+		"""
+		samtools index {input}
+		"""
+
+rule htseq_count:
+	input:
+		bam="results/{sample}.Aligned.sorted.bam",
+		gtf=annotations_gtf
+	output:
+		"results/{sample}.count.txt"
+	shell:
+		"""
+		htseq-count -f bam -r pos -s no -t exon -i gene_id {input.bam} {input.gtf} > {output}
+		"""

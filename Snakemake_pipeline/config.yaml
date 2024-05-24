@@ -1,0 +1,22 @@
+# Path to Reference Genome (S. typhimurium)
+dat_dir: "/Volumes/Sam_Drive/Data/Salmonella/Dat_Dir"
+genome_fasta: "/Volumes/Sam_Drive/Data/Salmonella/Reference/GCA_000210855.2_ASM21085v2_cds_from_genomic.fna"
+annotation_gtf: "/Volumes/Sam_Drive/Data/Salmonella/Reference/GCA_000210855.2_ASM21085v2_genomic.gtf"
+
+# Samples
+samples:
+  - name: "rnc1"
+    R1_fastq: "rnc1_1.fastq.gz"
+    R2_fastq: "rnc1_2.fastq.gz"
+
+  - name: "rnc2"
+    R1_fastq: "rnc2_1.fastq.gz"
+    R2_fastq: "rnc2_2.fastq.gz"
+
+  - name: "wt1"
+    R1_fastq: "wt1_1.fastq.gz"
+    R2_fastq: "wt1_2.fastq.gz"
+
+  - name: "wt2"
+    R1_fastq: "wt2_1.fastq.gz"
+    R2_fastq: "wt2_2.fastq.gz"
