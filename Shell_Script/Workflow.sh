@@ -18,3 +18,10 @@ STAR --genomeDir ./Genome_Dir \
 --outSAMtype BAM SortedByCoordinate \
 --sjdbGTFfile ./Reference/GCA_015475615.1_ASM1547561v1_genomic.gtf \
 --runThreadN 8
+
+# Running HTSeq for gene counts
+
+htseq-count -s no -f bam \
+./results/file_Aligned.sortedByCoord.out.bam \
+./Reference/GCA_015475615.1_ASM1547561v1_genomic.gtf \
+> ./results/counts_file/file_count.txt
