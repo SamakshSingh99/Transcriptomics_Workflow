@@ -23,13 +23,12 @@ rule star_index:
 	output:
 		directory("star_index")
 	params:
-		gtf=annotations_gtf,
 		genomeDir="star_index"
 
 	shell:
 		"""
 		STAR --runMode genomeGenerate --genomeDir {params.genomeDir} \
-		--genomeFastaFiles {input.genome} --sjdbGTFfile {params.gtf} \
+		--genomeFastaFiles {input.genome} --sjdbGTFfile {input.gtf} \
 		--runThreadN 8
 		"""
 
@@ -38,17 +37,20 @@ rule star_align:
 	input:
 		R1 = lambda wc: f"{data_dir}/{wc.sample}_1.fastq.gz",
 		index = "star_index"
+		gtf= annotations_gtf
 	output:
-		sam= "results/{sample}.Aligned.out.sam",
 		bam= "results/{sample}.Aligned.out.bam"
 	params:
 		genomeDir= "star_index"
 	shell:
 		"""
-		STAR --genomeDir {params.genomeDir} --readFilesIn {input.R1} {input.R2} \
-		--outFileNamePrefix results/{wildcards.sample}. --runThreadN 8 \
-		&& samtools view -bS results/{wildcards.sample}.Aligned.out.sam > {output.bam} \
-		&& rm {output.sam}
+		STAR --genomeDir {params.genomeDir} \
+		--readFilesIn {input.R1} {input.R2} \
+		--readFilesCommand gunzip -c \
+		--outFileNamePrefix results/{wildcards.sample}. \
+		--outSAMtype BAM SortedByCoordinate \
+		--sjdbGTFfile {input.gtf}
+		--runThreadN 8 \
 		"""
 
 rule index_bam:
@@ -69,5 +71,7 @@ rule htseq_count:
 		"results/{sample}.count.txt"
 	shell:
 		"""
-		htseq-count -f bam -r pos -s no -t exon -i gene_id {input.bam} {input.gtf} > {output}
+		htseq-count -f bam -s no \
+		-i gene_id {input.bam} {input.gtf} \
+		> {output}
 		"""
